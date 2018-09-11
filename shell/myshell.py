@@ -1,3 +1,6 @@
+import re
+import os
+
 user_input = input()
 list_input = user_input.split()
 print(list_input)
@@ -22,3 +25,12 @@ if len(list_input) > 3:
 print("command: {}".format(command))
 print("arguments: {}".format(arguments))
 print("file: {}".format(file))
+
+for directory in re.split(":", os.environ['PATH']): # try each directory in the path
+    program = "%s/%s" % (directory, command)
+    os.write(1, ("Child:  ...trying to exec %s\n" % program).encode())
+    try:
+        os.execve(program, arguments, os.environ) # try to exec program
+    except FileNotFoundError:             # ...expected
+        pass                              # ...fail quietly
+    # os.close(1)
