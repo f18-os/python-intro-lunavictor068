@@ -20,7 +20,7 @@ if len(list_input) > 2:
     command = list_input[0]
 # input has arguments
 if len(list_input) > 3:
-    arguments = list_input[1:index]
+    arguments = list_input[:index]
 
 print("command: {}".format(command))
 print("arguments: {}".format(arguments))
