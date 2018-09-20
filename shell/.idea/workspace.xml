@@ -10,17 +10,18 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="CoverageDataManager">
-    <SUITE FILE_PATH="coverage/shell$myshell.coverage" NAME="myshell Coverage Results" MODIFIED="1537242092054" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/shell$myshell.coverage" NAME="myshell Coverage Results" MODIFIED="1537416080175" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
   <component name="FileEditorManager">
     <leaf>
       <file leaf-file-name="myshell.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/myshell.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="619">
-              <caret line="89" selection-start-line="89" selection-end-line="89" />
+            <state relative-caret-position="2804">
+              <caret line="239" column="23" lean-forward="true" selection-start-line="239" selection-start-column="23" selection-end-line="239" selection-end-column="23" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
+                <element signature="e#1403#1830#0" />
               </folding>
             </state>
           </provider>
@@ -34,6 +35,14 @@
         <option value="Python Script" />
       </list>
     </option>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>out</find>
+      <find>outp</find>
+      <find>wc: cat: stdin: read: Bad file descriptor</find>
+      <find>os.wa</find>
+    </findStrings>
   </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
@@ -192,10 +201,11 @@
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/myshell.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="619">
-          <caret line="89" selection-start-line="89" selection-end-line="89" />
+        <state relative-caret-position="2804">
+          <caret line="239" column="23" lean-forward="true" selection-start-line="239" selection-start-column="23" selection-end-line="239" selection-end-column="23" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
+            <element signature="e#1403#1830#0" />
           </folding>
         </state>
       </provider>

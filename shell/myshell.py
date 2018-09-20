@@ -1,6 +1,7 @@
 import os
 import sys
 import re
+import fileinput
 # import os
 #
 # user_input = input()
@@ -69,27 +70,28 @@ def main():
 
 
 def execute(user_commands):
-    rc = os.fork()
-    if rc < 0:
-        os.write(2, ("fork failed, returning %d\n" % rc).encode())
-        sys.exit(1)
-    elif rc == 0:
-        command_found = False
-        for directory in re.split(":", os.environ['PATH']):  # try each directory in the path
-            program = "%s/%s" % (directory, user_commands[0])
-            os.write(1, ("Child:  ...trying to exec %s\n" % program).encode())
-            try:
-                os.execve(program, user_commands, os.environ)  # try to exec program
-                command_found = True
-            except FileNotFoundError:  # ...expected
-                pass  # ...fail quietly
-        if not command_found:
-            os.write(2, ("Child:    Could not exec %s\n" % user_commands[0]).encode())
-            sys.exit(1)  # terminate with error
-    else:
-        child_pid, exit_code = os.wait()
-        os.write(1, ("Program terminated with exit code %d\n" %
-                     exit_code).encode())
+    if len(user_commands) > 0:
+        rc = os.fork()
+        if rc < 0:
+            os.write(2, ("fork failed, returning %d\n" % rc).encode())
+            sys.exit(1)
+        elif rc == 0:
+            command_found = False
+            for directory in re.split(":", os.environ['PATH']):  # try each directory in the path
+                program = "%s/%s" % (directory, user_commands[0])
+                os.write(1, ("Child:  ...trying to exec %s\n" % program).encode())
+                try:
+                    os.execve(program, user_commands, os.environ)  # try to exec program
+                    command_found = True
+                except FileNotFoundError:  # ...expected
+                    pass  # ...fail quietly
+            if not command_found:
+                os.write(2, ("Child:    Could not exec %s\n" % user_commands[0]).encode())
+                sys.exit(1)  # terminate with error
+        else:
+            child_pid, exit_code = os.wait()
+            os.write(1, ("Program terminated with exit code %d\n" %
+                         exit_code).encode())
 
 
 shell_commands = ['>', '<', '|', '&']
@@ -109,32 +111,140 @@ def perform(operation, command_list):
     print(str(operation) + " " + str(command_list))
     index = None
     if operation is "<":
-        index = 1
-        print("performing <")
+        index = input_redirect(command_list)
     elif operation is ">":
-        index = 1
-        print("performing >")
+        index = output_redirect(command_list)
     elif operation is "|":
-        index = 1
-        print("performing |")
+        index = pipe(command_list)
     elif operation is "&":
-        index = 1
+        index = command_list.index(operation)
         print("performing &")
     else:
-        index = 1
-    return command_list.index(operation)
+        index = command_list.index(operation)
+    return index
 
 
-def output_redirect():
-    print("output redirect")
+def output_redirect(command_list):
+    index = command_list.index(">")
+    list_input = command_list[:index + 2]
+    index = list_input.index(">")
+    file = list_input[index + 1]
+    command = list_input[:index]
+    # with help from
+    # https://stackoverflow.com/questions/47719965/how-to-redirect-stdout-to-a-file-and-then-restore-stdout-back
+    # open
+    f = open(file, "w+")
+    saved = os.dup(1)
+    os.close(1)
+    os.dup(f.fileno())
+    os.dup2(f.fileno(), sys.stdout.fileno())
+    os.close(f.fileno())
+    # execute command
+    if len(command) > 0:
+        execute(command)
+    # restore
+    sys.stdout.flush()
+    os.dup2(saved, 1)
+    os.close(saved)
+    return index + 1
 
 
-def input_redirect():
-    print("output redirect")
+def input_redirect(command_list):
+    index = command_list.index("<")
+    list_input = command_list[:index + 2]
+    index = list_input.index("<")
+    file = list_input[index + 1]
+    command = list_input[:index]
+    # with help from
+    # https://stackoverflow.com/questions/21568810/how-do-i-redirect-input-and-output-with-pycharm-like-i-would-on-the-command-line
+    # open
+    f = open(file, "r")
+    saved = os.dup(0)
+    os.close(0)
+    os.dup(f.fileno())
+    os.dup2(f.fileno(), sys.stdin.fileno())
+    os.close(f.fileno())
+    # execute command
+    if len(command) > 0:
+        execute(command)
+    # restore
+    sys.stdin.flush()
+    os.dup2(saved, 0)
+    os.close(saved)
+    return index + 1
 
 
-def pipe():
-    print("output redirect")
+def pipe(command_list):
+    index = command_list.index("|")
+    command_left = command_list[:index]
+    command_right = command_list[index + 1:]
+    print("command_left: " + str(command_left))
+    print("command_right: " + str(command_right))
+    pid = os.getpid()  # get and remember pid
+
+    pr, pw = os.pipe()
+    for f in (pr, pw):
+        os.set_inheritable(f, True)
+    print("pipe fds: pr=%d, pw=%d" % (pr, pw))
+    print("About to fork (pid=%d)" % pid)
+
+    rc = os.fork()
+
+    if rc < 0:
+        print("fork failed, returning %d\n" % rc, file=sys.stderr)
+        sys.exit(1)
+
+    elif rc == 0:  # child - will write to pipe
+        # print("Child: My pid==%d.  Parent's pid=%d" % (os.getpid(), pid), file=sys.stderr)
+        # args = ["cat", "hello"]
+        #
+        # os.close(1)  # redirect child's stdout
+        # os.dup(pw)
+        # os.close(pw)
+        # # for fd in (pr, pw):
+        # #     os.close(fd)
+        # execute(command_left)
+        saved = os.dup(1)
+        os.close(1)
+        os.dup(pw)
+        os.dup2(pw, sys.stdout.fileno())
+        os.close(pw)
+        # execute command
+        if len(command_left) > 0:
+            execute(command_left)
+        # restore
+        os.dup2(saved, 1)
+        os.close(saved)
+    else:  # parent (forked ok)
+        # print("Parent: My pid==%d.  Child's pid=%d" % (os.getpid(), rc), file=sys.stderr)
+        # os.close(0)
+        # os.dup(pr)
+        # os.close(pr)
+        # # for fd in (pw, pr):
+        # #     os.close(fd)
+        # execute(command_right)
+
+        saved = os.dup(0)
+        os.close(0)
+        os.dup(pr)
+        os.dup2(pr, sys.stdin.fileno())
+        os.close(pr)
+        # execute command
+        if len(command_right) > 0:
+            execute(command_right)
+
+        # restore
+        sys.stdout.flush()
+        sys.stdin.flush()
+        os.dup2(saved, 0)
+        os.close(saved)
+
+        child_pid, exit_code = os.wait()
+    return len(command_list)
+
+
+
+
 
 
 def background():
