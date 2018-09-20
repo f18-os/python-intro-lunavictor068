@@ -208,9 +208,10 @@ def pipe(command_list):
         # execute(command_left)
         saved = os.dup(1)
         os.close(1)
-        os.dup(pw)
+        # os.dup(pw)
         os.dup2(pw, sys.stdout.fileno())
         os.close(pw)
+        os.close(pr)
         # execute command
         if len(command_left) > 0:
             execute(command_left)
@@ -228,9 +229,10 @@ def pipe(command_list):
 
         saved = os.dup(0)
         os.close(0)
-        os.dup(pr)
+        # os.dup(pr)
         os.dup2(pr, sys.stdin.fileno())
         os.close(pr)
+        os.close(pw)
         # execute command
         if len(command_right) > 0:
             execute(command_right)
